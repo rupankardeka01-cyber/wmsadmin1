@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - Gmail</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js">
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+
+    <style>
+        :root {
+            --google-blue: #1a73e8;
+            --google-blue-hover: #1557b0;
+            --google-blue-active: #174ea6;
+            --google-red: #ea4335;
+            --google-gray: #5f6368;
+            --google-light-gray: #dadce0;
+            --google-bg: #f8f9fa;
+            --white: #ffffff;
+            --error-red: #d93025;
+            --success-green: #0d904f;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.1);
+            --radius-sm: 6px;
+            --radius: 8px;
+            --radius-lg: 28px;
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f4f9;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Subtle animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(26, 115, 232, 0.04) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 60%, rgba(234, 67, 53, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 80%, rgba(52, 168, 83, 0.03) 0%, transparent 50%);
+            animation: bgShift 20s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        @keyframes bgShift {
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(1%, -1%) rotate(1deg);
+            }
+            50% {
+                transform: translate(-0.5%, 1%) rotate(-1deg);
+            }
+            75% {
+                transform: translate(-1%, -0.5%) rotate(0.5deg);
+            }
+        }
+
+        /* Main Container */
+        .auth-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 450px;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            padding: 48px 40px 36px;
+            overflow: hidden;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Decorative top bar */
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4285f4, #ea4335, #fbbc04, #34a853);
+            border-radius: 16px 16px 0 0;
+        }
+
+        /* Logo Area */
+        .logo-area {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .gmail-logo {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            background: #f1f3f4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .gmail-logo .material-icons-outlined {
+            font-size: 32px;
+            color: #ea4335;
+        }
+
+        /* Gmail M envelope icon using CSS */
+        .gmail-icon {
+            width: 36px;
+            height: 26px;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .gmail-icon-inner {
+            width: 36px;
+            height: 26px;
+            background: #ea4335;
+            clip-path: polygon(0 0, 100% 0, 100% 70%, 50% 100%, 0 70%);
+            position: relative;
+        }
+
+        .gmail-icon-inner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: #c5221f;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+        }
+
+        .auth-title {
+            font-family: 'Google Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 4px;
+            letter-spacing: -0.25px;
+        }
+
+        .auth-subtitle {
+            font-size: 15px;
+            color: var(--google-gray);
+            font-weight: 400;
+            letter-spacing: 0.1px;
+        }
+
+        /* Form */
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 6px;
+            letter-spacing: 0.15px;
+            transition: color var(--transition);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper .material-icons-outlined {
+            position: absolute;
+            left: 14px;
+            font-size: 20px;
+            color: #9aa0a6;
+            pointer-events: none;
+            transition: color var(--transition);
+            z-index: 1;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px 14px 14px 44px;
+            font-size: 15px;
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            color: #202124;
+            background: #f8f9fa;
+            border: 2px solid transparent;
+            border-radius: var(--radius);
+            outline: none;
+            transition: all var(--transition);
+            letter-spacing: 0.2px;
+        }
+
+        .auth-input::placeholder {
+            color: #9aa0a6;
+            font-weight: 400;
+        }
+
+        .auth-input:hover {
+            background: #f1f3f4;
+            border-color: #dadce0;
+        }
+
+        .auth-input:focus {
+            background: var(--white);
+            border-color: var(--google-blue);
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.08);
+        }
+
+        .auth-input:focus~.material-icons-outlined,
+        .input-wrapper:focus-within .material-icons-outlined {
+            color: var(--google-blue);
+        }
+
+        /* Password visibility toggle */
+        .toggle-password {
+            position: absolute;
+            right: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            color: #9aa0a6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all var(--transition);
+            z-index: 1;
+        }
+
+        .toggle-password:hover {
+            background: #e8eaed;
+            color: #5f6368;
+        }
+
+        .toggle-password .material-icons-outlined {
+            font-size: 20px;
+            position: static;
+            color: inherit;
+        }
+
+        /* Error message */
+        .error-message {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--error-red);
+            background: #fce8e6;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin-top: -4px;
+            animation: shake 0.4s ease;
+        }
+
+        .error-message.show {
+            display: flex;
+        }
+
+        .error-message .material-icons-outlined {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            20% {
+                transform: translateX(-6px);
+            }
+            40% {
+                transform: translateX(6px);
+            }
+            60% {
+                transform: translateX(-4px);
+            }
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        /* Success message */
+        .success-message {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--success-green);
+            background: #e6f4ea;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin-top: -4px;
+        }
+
+        .success-message.show {
+            display: flex;
+        }
+
+        .success-message .material-icons-outlined {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        /* Forgot password link */
+        .forgot-link {
+            text-align: right;
+            margin-top: -8px;
+        }
+
+        .forgot-link a {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--google-blue);
+            text-decoration: none;
+            cursor: pointer;
+            letter-spacing: 0.15px;
+            transition: color var(--transition);
+        }
+
+        .forgot-link a:hover {
+            color: var(--google-blue-hover);
+            text-decoration: underline;
+        }
+
+        /* Buttons */
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 13px 24px;
+            font-size: 15px;
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--google-blue);
+            color: var(--white);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary:hover {
+            background: var(--google-blue-hover);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            background: var(--google-blue-active);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            background: #a8c7fa;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-google {
+            background: var(--white);
+            color: #3c4043;
+            border: 2px solid #dadce0;
+            font-weight: 500;
+        }
+
+        .btn-google:hover {
+            background: #f8f9fa;
+            border-color: #bdc1c6;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-google:active {
+            background: #f1f3f4;
+        }
+
+        .btn-google img {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Google G icon via inline SVG approach */
+        .google-g-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 4px 0;
+        }
+
+        .divider-line {
+            flex: 1;
+            height: 1px;
+            background: #dadce0;
+        }
+
+        .divider-text {
+            font-size: 13px;
+            color: #80868b;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+
+        /* Footer text */
+        .auth-footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--google-gray);
+        }
+
+        .auth-footer a {
+            color: var(--google-blue);
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color var(--transition);
+        }
+
+        .auth-footer a:hover {
+            color: var(--google-blue-hover);
+            text-decoration: underline;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: none;
+        }
+
+        .btn-primary.loading .spinner {
+            display: inline-block;
+        }
+
+        .btn-primary.loading .btn-text {
+            display: none;
+        }
+
+        .btn-primary.loading {
+            pointer-events: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Dashboard (post-login) */
+        .dashboard {
+            display: none;
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .dashboard .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4285f4, #34a853);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: #fff;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+        }
+
+        .dashboard h2 {
+            font-family: 'Google Sans', sans-serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: #202124;
+            margin-bottom: 4px;
+        }
+
+        .dashboard .user-email {
+            font-size: 15px;
+            color: var(--google-gray);
+            margin-bottom: 24px;
+            word-break: break-all;
+        }
+
+        .dashboard .btn-signout {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: #fff;
+            color: #5f6368;
+            border: 2px solid #dadce0;
+            border-radius: var(--radius-lg);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+        }
+
+        .dashboard .btn-signout:hover {
+            background: #f8f9fa;
+            border-color: #bdc1c6;
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* Info card in dashboard */
+        .info-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .info-card .material-icons-outlined {
+            font-size: 28px;
+            color: #4285f4;
+            flex-shrink: 0;
+        }
+
+        .info-card .info-text {
+            font-size: 13px;
+            color: #5f6368;
+            line-height: 1.5;
+        }
+
+        .info-card .info-text strong {
+            color: #202124;
+            font-weight: 500;
+        }
+
+        /* Hide elements */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .auth-container {
+                padding: 36px 24px 28px;
+                border-radius: 12px;
+            }
+            .auth-container::before {
+                border-radius: 12px 12px 0 0;
+            }
+            .auth-title {
+                font-size: 24px;
+            }
+            .auth-input {
+                padding: 12px 12px 12px 40px;
+                font-size: 14px;
+            }
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== AUTH CONTAINER ==================== -->
+    <div class="auth-container" id="authContainer">
+        <!-- Logo -->
+        <div class="logo-area">
+            <div class="gmail-logo">
+                <div class="gmail-icon">
+                    <div class="gmail-icon-inner"></div>
+                </div>
+            </div>
+            <h1 class="auth-title" id="authTitle">Sign in</h1>
+            <p class="auth-subtitle" id="authSubtitle">to continue to Gmail</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage">
+            <span class="material-icons-outlined">error_outline</span>
+            <span id="errorText"></span>
+        </div>
+
+        <!-- Success Message -->
+        <div class="success-message" id="successMessage">
+            <span class="material-icons-outlined">check_circle</span>
+            <span id="successText"></span>
+        </div>
+
+        <!-- Form -->
+        <form class="auth-form" id="authForm" autocomplete="off">
+            <!-- Name field (only for signup) -->
+            <div class="input-group hidden" id="nameGroup">
+                <label for="displayName">Full Name</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined">person</span>
+                    <input type="text" class="auth-input" id="displayName" placeholder="Enter your full name" autocomplete="name">
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="input-group">
+                <label for="email">Email address</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined">email</span>
+                    <input type="email" class="auth-input" id="email" placeholder="you@example.com" required autocomplete="email">
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div class="input-group">
+                <label for="password">Password</label>
+                <div class="input-wrapper">
+                    <span class="material-icons-outlined">lock</span>
+                    <input type="password" class="auth-input" id="password" placeholder="Enter your password" required autocomplete="current-password" minlength="6">
+                    <button type="button" class="toggle-password" id="togglePassword" tabindex="-1" aria-label="Toggle password visibility">
+                        <span class="material-icons-outlined">visibility_off</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Forgot password (only for login) -->
+            <div class="forgot-link" id="forgotLink">
+                <a id="forgotPasswordLink">Forgot password?</a>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary" id="submitBtn">
+                <span class="btn-text" id="submitBtnText">Sign in</span>
+                <span class="spinner"></span>
+            </button>
+
+            <!-- Divider -->
+            <div class="divider">
+                <span class="divider-line"></span>
+                <span class="divider-text">or</span>
+                <span class="divider-line"></span>
+            </div>
+
+            <!-- Google Sign-In -->
+            <button type="button" class="btn btn-google" id="googleSignInBtn">
+                <svg class="google-g-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                <span>Continue with Google</span>
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="auth-footer" id="authFooter">
+            <span id="footerText">Don't have an account?</span>
+            <a id="toggleAuthLink">Create account</a>
+        </div>
+    </div>
+
+    <!-- ==================== DASHBOARD (POST-LOGIN) ==================== -->
+    <div class="auth-container dashboard" id="dashboard">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <h2>Welcome back!</h2>
+        <p class="user-email" id="userEmail"></p>
+        <div class="info-card">
+            <span class="material-icons-outlined">shield</span>
+            <div class="info-text">
+                <strong>Signed in securely</strong><br>
+                You are now authenticated with Firebase. This is a demo dashboard.
+            </div>
+        </div>
+        <button class="btn-signout" id="signOutBtn">
+            <span class="material-icons-outlined">logout</span>
+            Sign out
+        </button>
+    </div>
+
+    <script>
+        // ==================== FIREBASE INITIALIZATION ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAYo85hjmMHIUkaALQco2zZvLGNB4qnn6w",
+            authDomain: "login-ec269.firebaseapp.com",
+            databaseURL: "https://login-ec269-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "login-ec269",
+            storageBucket: "login-ec269.firebasestorage.app",
+            messagingSenderId: "105803973773",
+            appId: "1:105803973773:web:d04142810a7eba2acd4ec4",
+            measurementId: "G-DY05C5324Q"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // ==================== DOM ELEMENTS ====================
+        const authContainer = document.getElementById('authContainer');
+        const dashboard = document.getElementById('dashboard');
+        const authForm = document.getElementById('authForm');
+        const authTitle = document.getElementById('authTitle');
+        const authSubtitle = document.getElementById('authSubtitle');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const successMessage = document.getElementById('successMessage');
+        const successText = document.getElementById('successText');
+        const nameGroup = document.getElementById('nameGroup');
+        const displayNameInput = document.getElementById('displayName');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const forgotLink = document.getElementById('forgotLink');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const toggleAuthLink = document.getElementById('toggleAuthLink');
+        const footerText = document.getElementById('footerText');
+        const googleSignInBtn = document.getElementById('googleSignInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const userAvatar = document.getElementById('userAvatar');
+        const userEmail = document.getElementById('userEmail');
+
+        // ==================== STATE ====================
+        let isSignUpMode = false;
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+            successMessage.classList.remove('show');
+            // Auto-hide after 6 seconds
+            clearTimeout(errorMessage._timeout);
+            errorMessage._timeout = setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 6000);
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        function showSuccess(message) {
+            successText.textContent = message;
+            successMessage.classList.add('show');
+            errorMessage.classList.remove('show');
+            clearTimeout(successMessage._timeout);
+            successMessage._timeout = setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 5000);
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitBtn.classList.add('loading');
+                submitBtn.disabled = true;
+                googleSignInBtn.disabled = true;
+            } else {
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+                googleSignInBtn.disabled = false;
+            }
+        }
+
+        function getFirstName(emailOrName) {
+            if (!emailOrName) return '?';
+            // If contains @, extract name part from email
+            if (emailOrName.includes('@')) {
+                const namePart = emailOrName.split('@')[0];
+                return namePart.charAt(0).toUpperCase();
+            }
+            return emailOrName.charAt(0).toUpperCase();
+        }
+
+        // ==================== TOGGLE SIGN UP / SIGN IN MODE ====================
+        function toggleAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            hideError();
+            successMessage.classList.remove('show');
+            authForm.reset();
+
+            if (isSignUpMode) {
+                authTitle.textContent = 'Create account';
+                authSubtitle.textContent = 'to get started with Gmail';
+                submitBtnText.textContent = 'Sign up';
+                nameGroup.classList.remove('hidden');
+                forgotLink.classList.add('hidden');
+                footerText.textContent = 'Already have an account?';
+                toggleAuthLink.textContent = 'Sign in';
+                displayNameInput.setAttribute('required', '');
+                passwordInput.setAttribute('minlength', '6');
+                passwordInput.setAttribute('autocomplete', 'new-password');
+            } else {
+                authTitle.textContent = 'Sign in';
+                authSubtitle.textContent = 'to continue to Gmail';
+                submitBtnText.textContent = 'Sign in';
+                nameGroup.classList.add('hidden');
+                forgotLink.classList.remove('hidden');
+                footerText.textContent = "Don't have an account?";
+                toggleAuthLink.textContent = 'Create account';
+                displayNameInput.removeAttribute('required');
+                passwordInput.setAttribute('minlength', '1');
+                passwordInput.setAttribute('autocomplete', 'current-password');
+            }
+        }
+
+        // ==================== TOGGLE PASSWORD VISIBILITY ====================
+        togglePasswordBtn.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            const icon = togglePasswordBtn.querySelector('.material-icons-outlined');
+            icon.textContent = isPassword ? 'visibility' : 'visibility_off';
+        });
+
+        // ==================== FORGOT PASSWORD ====================
+        forgotPasswordLink.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = emailInput.value.trim();
+
+            if (!email) {
+                showError('Please enter your email address first.');
+                emailInput.focus();
+                return;
+            }
+
+            // Basic email validation
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('Please enter a valid email address.');
+                emailInput.focus();
+                return;
+            }
+
+            setLoading(true);
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showSuccess('Password reset link sent! Check your inbox.');
+            } catch (error) {
+                let message = 'Failed to send reset email.';
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        message = 'No account found with this email address.';
+                        break;
+                    case 'auth/invalid-email':
+                        message = 'Please enter a valid email address.';
+                        break;
+                    case 'auth/too-many-requests':
+                        message = 'Too many requests. Please try again later.';
+                        break;
+                    default:
+                        message = error.message;
+                }
+                showError(message);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // ==================== TOGGLE AUTH LINK ====================
+        toggleAuthLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleAuthMode();
+        });
+
+        // ==================== FORM SUBMISSION ====================
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            hideError();
+            successMessage.classList.remove('show');
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value.trim();
+            const displayName = displayNameInput.value.trim();
+
+            // Validation
+            if (!email || !password) {
+                showError('Please fill in all required fields.');
+                return;
+            }
+
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('Please enter a valid email address.');
+                emailInput.focus();
+                return;
+            }
+
+            if (isSignUpMode && password.length < 6) {
+                showError('Password must be at least 6 characters long.');
+                passwordInput.focus();
+                return;
+            }
+
+            if (isSignUpMode && !displayName) {
+                showError('Please enter your full name.');
+                displayNameInput.focus();
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                if (isSignUpMode) {
+                    // Create account
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    // Update profile with display name
+                    await userCredential.user.updateProfile({
+                        displayName: displayName
+                    });
+                    showSuccess('Account created successfully! Welcome aboard 🎉');
+                    // Brief delay before showing dashboard
+                    setTimeout(() => showDashboard(userCredential.user), 800);
+                } else {
+                    // Sign in
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    showDashboard(userCredential.user);
+                }
+            } catch (error) {
+                let message = 'An unexpected error occurred. Please try again.';
+                switch (error.code) {
+                    case 'auth/email-already-in-use':
+                        message = 'An account with this email already exists. Try signing in instead.';
+                        break;
+                    case 'auth/invalid-email':
+                        message = 'Please enter a valid email address.';
+                        break;
+                    case 'auth/operation-not-allowed':
+                        message =
+                            'Email/password sign-in is not enabled. Please contact support.';
+                        break;
+                    case 'auth/weak-password':
+                        message = 'Password is too weak. Please use at least 6 characters.';
+                        break;
+                    case 'auth/user-disabled':
+                        message = 'This account has been disabled. Please contact support.';
+                        break;
+                    case 'auth/user-not-found':
+                        message = 'No account found with this email. Create an account first.';
+                        break;
+                    case 'auth/wrong-password':
+                        message = 'Incorrect password. Please try again or reset your password.';
+                        break;
+                    case 'auth/invalid-credential':
+                        message = 'Invalid email or password. Please check your credentials.';
+                        break;
+                    case 'auth/too-many-requests':
+                        message = 'Too many login attempts. Please wait and try again later.';
+                        break;
+                    case 'auth/network-request-failed':
+                        message = 'Network error. Please check your internet connection.';
+                        break;
+                    default:
+                        message = error.message;
+                }
+                showError(message);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // ==================== GOOGLE SIGN-IN ====================
+        googleSignInBtn.addEventListener('click', async () => {
+            hideError();
+            successMessage.classList.remove('show');
+            setLoading(true);
+
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.setCustomParameters({
+                prompt: 'select_account'
+            });
+
+            try {
+                const result = await auth.signInWithPopup(provider);
+                showDashboard(result.user);
+            } catch (error) {
+                let message = 'Google sign-in failed. Please try again.';
+                switch (error.code) {
+                    case 'auth/popup-closed-by-user':
+                        message = 'Sign-in popup was closed. Please try again.';
+                        break;
+                    case 'auth/popup-blocked':
+                        message = 'Popup was blocked by your browser. Please allow popups and try again.';
+                        break;
+                    case 'auth/cancelled-popup-request':
+                        message = 'Sign-in cancelled. Please try again.';
+                        break;
+                    case 'auth/account-exists-with-different-credential':
+                        message =
+                            'An account exists with this email using a different sign-in method. Please sign in with email/password.';
+                        break;
+                    case 'auth/network-request-failed':
+                        message = 'Network error. Please check your internet connection.';
+                        break;
+                    default:
+                        message = error.message;
+                }
+                if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
+                    showError(message);
+                }
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // ==================== SHOW DASHBOARD ====================
+        function showDashboard(user) {
+            authContainer.classList.add('hidden');
+            dashboard.style.display = 'block';
+            dashboard.classList.add('dashboard');
+            // Trigger reflow for animation
+            dashboard.offsetHeight;
+            dashboard.style.animation = 'none';
+            dashboard.offsetHeight;
+            dashboard.style.animation = 'fadeIn 0.4s ease';
+
+            const displayName = user.displayName || user.email.split('@')[0];
+            userAvatar.textContent = getFirstName(displayName);
+            userEmail.textContent = user.email;
+
+            // Update document title
+            document.title = 'Inbox - Gmail';
+        }
+
+        function hideDashboard() {
+            dashboard.style.display = 'none';
+            authContainer.classList.remove('hidden');
+            document.title = 'Sign in - Gmail';
+            // Reset form
+            authForm.reset();
+            hideError();
+            successMessage.classList.remove('show');
+            // Switch back to sign-in mode if in sign-up
+            if (isSignUpMode) {
+                toggleAuthMode();
+            }
+        }
+
+        // ==================== SIGN OUT ====================
+        signOutBtn.addEventListener('click', async () => {
+            try {
+                await auth.signOut();
+                hideDashboard();
+                showSuccess('You have been signed out successfully.');
+            } catch (error) {
+                showError('Failed to sign out. Please try again.');
+            }
+        });
+
+        // ==================== AUTH STATE LISTENER ====================
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                showDashboard(user);
+            } else {
+                // User is signed out
+                hideDashboard();
+            }
+            // Hide any loading states
+            setLoading(false);
+        });
+
+        // ==================== INITIAL SETUP ====================
+        // Ensure correct initial state
+        if (isSignUpMode) {
+            toggleAuthMode(); // Reset to sign-in mode
+        }
+
+        console.log('🔥 Firebase Gmail Login ready!');
+        console.log('   - Email/Password authentication enabled');
+        console.log('   - Google Sign-In enabled');
+        console.log('   - Password reset enabled');
+        console.log('   Project:', firebaseConfig.projectId);
+    </script>
+</body>
+</html>
